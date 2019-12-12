@@ -10,7 +10,7 @@ set -e
 DIR=$(dirname "$0")
 cd $DIR
 
-sudo rm -rf ./data/*
+#sudo rm -rf ./data/*
 
 if $(docker network list | grep -q myfabric-network);then
   echo 'myfabric-network exists'

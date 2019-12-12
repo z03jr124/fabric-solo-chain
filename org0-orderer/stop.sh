@@ -12,4 +12,5 @@ cd $DIR
 
 #docker-compose -p tianfu-tv down
 
-docker-compose down
+#docker-compose down
+docker-compose stop
