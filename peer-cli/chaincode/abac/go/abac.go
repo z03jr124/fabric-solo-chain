@@ -79,6 +79,46 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	return shim.Success(nil)
 }
 
+
+//{"Args":["write","key","value"]}'
+func (t *SimpleChaincode) write(stub shim.ChaincodeStubInterface, key, value string) pb.Response {
+	fmt.Printf("write %s, value is %s\n", key, value)
+	if err := stub.PutState(key, []byte(value)); err != nil {
+		return shim.Error("write fail " + err.Error())
+	}
+	return shim.Success(nil)
+}
+
+//{"Args":["history","key"]}'
+func (t *SimpleChaincode) history(stub shim.ChaincodeStubInterface, key string) pb.Response {
+	fmt.Printf("history %s\n", key)
+	iter, err := stub.GetHistoryForKey(key)
+	defer iter.Close()
+	if err != nil {
+		return shim.Error("query fail " + err.Error())
+	}
+
+	values := make(map[string]string)
+
+	for iter.HasNext() {
+		fmt.Printf("next\n")
+		if kv, err := iter.Next(); err == nil {
+			fmt.Printf("id: %s value: %s\n", kv.TxId, kv.Value)
+			values[kv.TxId] = string(kv.Value)
+		}
+		if err != nil {
+			return shim.Error("iterator history fail: " + err.Error())
+		}
+	}
+
+	bytes, err := json.Marshal(values)
+	if err != nil {
+		return shim.Error("json marshal fail: " + err.Error())
+	}
+
+	return shim.Success(bytes)
+}
+
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	fmt.Println("abac Invoke")
 	function, args := stub.GetFunctionAndParameters()
@@ -91,6 +131,12 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	} else if function == "query" {
 		// the old "Query" is now implemtned in invoke
 		return t.query(stub, args)
+	}else if function == "write" {
+		// the old "write" is now implemtned in invoke
+		return t.write(stub, args)
+	}else if function == "history" {
+		// the old "history" is now implemtned in invoke
+		return t.history(stub, args)
 	}
 
 	return shim.Error("Invalid invoke function name. Expecting \"invoke\" \"delete\" \"query\"")
